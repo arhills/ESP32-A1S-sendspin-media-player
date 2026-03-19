@@ -38,8 +38,13 @@ ota:
 #  - platform: web_server
 
 wifi:
-  wifi_ssid: !secret wifi_ssid
-  wifi_password: !secret wifi_password
+  networks:
+  - ssid: ${wifi_ssid}
+    password: ${wifi_password}
+  - ssid: ${wifi_ssid_2}
+    password: ${wifi_password_2}
+  - ssid: ${wifi_ssid_3}
+    password: ${wifi_password_3}
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
@@ -205,30 +210,6 @@ external_components:
       url: https://github.com/esphome/esphome
       ref: 119a5c25a483c58b3d58a35c8cec95495c6491c2
     components: [sendspin]
-  - source:
-      # Dev commit hash for squash merge from PR#10212
-      type: git
-      url: https://github.com/esphome/esphome
-      ref: 903971de12c1b291ca8cd367ce5cdf9af8b304ae
-    components: [runtime_image]
-  - source:
-      # Dev commit hash for squash merge from PR#12258
-      type: git
-      url: https://github.com/esphome/esphome
-      ref: 264c8faedd0ab956b0437ec2ecc0bacae1708923
-    components: [media_player]
-  - source:
-      # Dev commit hash for squash merge from PR#14013
-      type: git
-      url: https://github.com/esphome/esphome
-      ref: ba7134ee3f870ce00d2990d84b142b734028330f
-    components: [mdns]
-  - source:
-      # Dev commit hash for squash merge from PR#14108
-      type: git
-      url: https://github.com/esphome/esphome
-      ref: d2026b4cd74bbeb9b86941bf1887f3d93d639387
-    components: [audio]
 
 # ===== Speaker & Audio Pipeline =====
 speaker:
@@ -279,7 +260,7 @@ media_source:
     id: sendspin_source
   - platform: http_request
     id: http_source
-    buffer_size: 500000
+  #  buffer_size: 500000
 
 media_player:
   - platform: speaker_source
@@ -378,3 +359,4 @@ text_sensor:
  #   name: Device DNS Address
     power_save_mode:
       name: Device Wifi Power Save Mode
+
