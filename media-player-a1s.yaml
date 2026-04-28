@@ -37,13 +37,8 @@ ota:
     password: ${ota_password}
 
 wifi:
-  networks:
-  - ssid: ${wifi_ssid}
-    password: ${wifi_password}
-  - ssid: ${wifi_ssid_2}
-    password: ${wifi_password_2}
-  - ssid: ${wifi_ssid_3}
-    password: ${wifi_password_3}
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
@@ -197,11 +192,10 @@ light:
 # Using commit 9148832 for audio to avoid include_builtin_idf_component issue
 external_components:
   - source:
-      # https://github.com/esphome/esphome/pull/12429
       type: git
-      url: https://github.com/kahrendt/esphome
-      ref: 890e33f99af2c2ea15dc74c3ec4cf32d25203526
-    components: [const, media_source, sendspin]
+      url: https://www.github.com/esphome/esphome
+      ref: dev
+    components: [sendspin]
   - source:
       # https://github.com/esphome/esphome/pull/12429
       type: git
