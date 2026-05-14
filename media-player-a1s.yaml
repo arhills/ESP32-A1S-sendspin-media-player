@@ -23,6 +23,21 @@ esp32:
   board: esp-wrover-kit
   framework:
     type: esp-idf
+    sdkconfig_options:
+      CONFIG_ESP_WIFI_RX_IRAM_OPT: "y" 
+      CONFIG_ESP_WIFI_IRAM_OPT: "y" 
+      CONFIG_ESP_WIFI_EXTRA_IRAM_OPT: "y"
+      CONFIG_LWIP_IRAM_OPTIMIZATION: "y"
+      # original options used
+      CONFIG_SPIRAM_RODATA: "y"
+      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: "y"
+      CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"
+      CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY: "y"
+      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
+      CONFIG_MBEDTLS_SSL_PROTO_TLS1_3: "y"
+    advanced:
+      minimum_chip_revision: 3.0
+      sram1_as_iram: true
 
 # Enable logging
 logger:
@@ -50,9 +65,6 @@ captive_portal:
 psram:
   ignore_not_found: false 
 
-# ===== ES8388 Audio Codec Configuration =====
-# Reference: https://esphome.io/components/audio_dac/es8388/
-
 i2c:
   sda: GPIO33
   scl: GPIO32
@@ -78,7 +90,6 @@ i2s_audio:
   i2s_bclk_pin: GPIO27
   i2s_mclk_pin: GPIO0
 
-# ===== Amplifier Control =====
 switch:
   - platform: gpio
     pin: GPIO21
@@ -95,7 +106,6 @@ sensor:
     name: WiFi
     update_interval: 60s 
 
-# ===== Microphone =====
 microphone:
   - platform: i2s_audio
     i2s_din_pin: GPIO35
@@ -105,7 +115,6 @@ microphone:
     sample_rate: 16000
     bits_per_sample: 16bit
 
-# ===== Hardware Buttons & Sensors =====
 binary_sensor:
   - platform: gpio
     pin:
@@ -172,7 +181,6 @@ binary_sensor:
     filters:
       - delayed_off: 10ms
 
-# ===== Status LED =====
 output:
   - platform: ledc
     pin:
@@ -187,17 +195,6 @@ light:
     output: output_led
     restore_mode: ALWAYS_OFF
 
-# --- SendSpin & Media Player Logic (Standard) ---
-# ===== Sendspin External Components =====
-# Using commit 9148832 for audio to avoid include_builtin_idf_component issue
-external_components:
-  - source:
-      type: git
-      url: https://www.github.com/esphome/esphome
-      ref: dev
-    components: [sendspin]
-
-# ===== Speaker & Audio Pipeline =====
 speaker:
   - platform: i2s_audio
     i2s_audio_id: i2s_output
@@ -206,7 +203,7 @@ speaker:
     i2s_dout_pin: GPIO26
     bits_per_sample: 32bit
     dac_type: external
-    channel: mono
+    channel: stereo
     timeout: never
     buffer_duration: 100ms
     audio_dac: es8388_dac
@@ -215,7 +212,7 @@ speaker:
     id: mixing_speaker
     output_speaker: i2s_speaker_id
     num_channels: 2
-    task_stack_in_psram: ${task}
+   # task_stack_in_psram: ${task}
     source_speakers:
       - id: announcement_mixer_input
         timeout: never
@@ -234,23 +231,31 @@ speaker:
     sample_rate: 48000
     bits_per_sample: 16
 
-http_request:
+audio:
+  codecs:
+    flac:
+      buffer_memory: internal  # Unnecessary on an ESP32-S3; uses more internal memory
+    opus:
+      state_memory: internal  # Unnecessary on an ESP32-S3; uses more internal memory
+      pseudostack:
+        threadsafe: false  # Unnecessary on an ESP32-S3; prevents decoding two Opus streams simultaneously
 
-# ===== Sendspin Media Player =====
 sendspin:
   id: sendspin_hub
-  task_stack_in_psram: false
+
+#  task_stack_in_psram: false
 
 media_source:
   - platform: audio_http
     id: http_announcement_source
-    buffer_size: 250000
+    buffer_size: 100000
   - platform: audio_http
     id: http_media_source
     buffer_size: 500000
   - platform: sendspin
     id: sendspin_media_source
-    fixed_delay: 480 microseconds  # The AIC3204 DAC used, as configured, on the VPE delays audio by 480 microseconds
+  #  fixed_delay: 480 microseconds  # The AIC3204 DAC used, as configured, on the VPE delays audio by 480 microseconds
+    decode_memory: internal  # Unnecessary on an ESP32-S3; uses more internal memory
 
 media_player:
   - platform: speaker_source
@@ -267,7 +272,7 @@ media_player:
       sources:
         - http_announcement_source
     media_pipeline:
-      format: FLAC     # FLAC is the least processor intensive codec
+      format: FLAC    # FLAC is the least processor intensive codec
       num_channels: 2
       sample_rate: 48000
       speaker: media_resampling_speaker
@@ -314,41 +319,18 @@ globals:
 
 # ===== Track Metadata (Optional) =====
 text_sensor:
-  - platform: sendspin
-    type: title
-    name: Track Title
 
-  - platform: sendspin
-    type: artist
-    name: Artist
-
-  - platform: sendspin
-    type: album
-    name: Album
-
-  - platform: sendspin
-    type: year
-    name: Year
-
-  - platform: sendspin
-    type: track
-    name: Track Number
 
   - platform: wifi_info
     ip_address:
       name: Device IP Address
-    #  address_0:
-     #    name: Device IP Address 0
     ssid:
       name: Device Connected SSID
- # bssid:
- #   name: Device Connected BSSID
- # mac_address:
- #   name: Device Mac Wifi Address
+    mac_address:
+      name: Device Mac Wifi Address
     scan_results:
       name: Device Latest Scan Results
-#  dns_address:
- #   name: Device DNS Address
+    dns_address:
+      name: Device DNS Address
     power_save_mode:
       name: Device Wifi Power Save Mode
-
