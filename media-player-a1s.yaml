@@ -212,7 +212,7 @@ speaker:
     id: mixing_speaker
     output_speaker: i2s_speaker_id
     num_channels: 2
-   # task_stack_in_psram: ${task}
+    task_stack_in_psram: ${task}
     source_speakers:
       - id: announcement_mixer_input
         timeout: never
@@ -242,8 +242,7 @@ audio:
 
 sendspin:
   id: sendspin_hub
-
-#  task_stack_in_psram: false
+  task_stack_in_psram: ${task}
 
 media_source:
   - platform: audio_http
